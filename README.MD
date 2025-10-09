@@ -6,7 +6,9 @@
 [![FPGA](https://img.shields.io/badge/FPGA-VHDL-orange.svg)](https://en.wikipedia.org/wiki/VHDL)
 
 A comprehensive **Software-Defined Radio (SDR)** simulator for Global Navigation Satellite System (GNSS) signals. This project supports multiple satellite constellations and provides both software simulation and hardware implementation capabilities.
-
+This project is still ongoing. This is an unfinished project based on py, and I will gradually complete it in my spare time.
+In the [GNSS-sim-python] folder, [pluto_studio.py] is a simple graphical user interface that I made, it has many problems and needs to be improved.
+Currently, I want to use [adi pluto sdr or hackrf sdr] to achieve gnss signal data simulation, now I want to with plutodr first, developers with the same interest, we can also maintain this warehouse together.
 ## 🌟 Features
 
 ### Supported Satellite Systems
