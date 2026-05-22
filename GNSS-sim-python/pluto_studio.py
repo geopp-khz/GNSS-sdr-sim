@@ -141,20 +141,20 @@ class PlutoStreamer(QtCore.QObject):
 	def start_generator(self, rinex_files: dict, start_time: str, duration_s: int, 
 					   static_lat: float, static_lon: float, static_alt: float,
 					   gpgga_path: str, is_static: bool, chunk: int):
-		"""实时生成 GNSS 信号并发送到 Pluto"""
+		"""Generate GNSS signals in real time and send them to Pluto."""
 		def run():
 			try:
-				# 导入生成器模块
+				# Import generator modules
 				sys.path.append(os.path.join(os.path.dirname(__file__)))
 				import main as gnss_main
 				import orbit
 				import datetime
 				
-				# 解析起始时间
+				# Parse the start time
 				dt_start = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 				dt_end = dt_start + datetime.timedelta(seconds=duration_s)
 				
-				# 加载卫星
+				# Load satellites
 				sats = {}
 				for system, rinex_path in rinex_files.items():
 					if not rinex_path or not os.path.isfile(rinex_path):
@@ -175,28 +175,28 @@ class PlutoStreamer(QtCore.QObject):
 						else:
 							continue
 						
-						# 加载卫星数据
+						# Load satellite data
 						loaded_sats, _ = constellation.loadSats([(constellation, rinex_path)])
 						sats.update(loaded_sats)
 					except Exception as e:
-						print(f"加载 {system} 失败: {e}")
+						print(f"Failed to load {system}: {e}")
 						continue
-				
+					
 				if not sats:
-					raise RuntimeError("未成功加载任何卫星数据")
+					raise RuntimeError("No satellite data was loaded successfully")
 				
-				# 位置函数
+				# Position function
 				if is_static:
-					# 静态位置
+					# Static position
 					user_pos = orbit.wgslla2xyz(static_lat, static_lon, static_alt)
 					pos_vel_func = gnss_main.simplePathInterpolation([(dt_start, user_pos)])
 				else:
-					# 轨迹插值
+					# Track interpolation
 					track_points = self._parse_gpgga(gpgga_path)
 					if not track_points:
-						raise RuntimeError("轨迹文件为空或解析失败")
+						raise RuntimeError("Track file is empty or could not be parsed")
 					
-					# 转换为 ECEF 坐标
+					# Convert to ECEF coordinates
 					pos_vel_points = []
 					for ts, lat, lon, alt in track_points:
 						pos = orbit.wgslla2xyz(lat, lon, alt)
@@ -206,7 +206,7 @@ class PlutoStreamer(QtCore.QObject):
 				
 				self.started.emit()
 				
-				# 实时生成循环
+				# Real-time generation loop
 				current_time = dt_start
 				fs = self._tx.sample_rate
 				dt_step = datetime.timedelta(seconds=chunk / fs)
@@ -214,28 +214,29 @@ class PlutoStreamer(QtCore.QObject):
 				count = 0
 				
 				while not self._stop.is_set() and current_time < dt_end:
-					# 获取当前位置
+					# Get the current position
 					user_pos, user_vel = pos_vel_func(current_time)
 					
-					# 生成当前时刻的帧数据
+					# Generate frame data for the current time
 					frame_data, results = gnss_main.generateFrame(
 						user_pos, user_vel, sats, current_time, powerFactor=1.0
 					)
 					
-					# 简化的 IQ 生成（实际应调用完整的调制链路）
-					# 这里用正弦波占位，实际应包含 PRN 码、导航数据、多普勒等
+					# Simplified IQ generation (the full modulation chain should be used here)
+					# This uses a sine wave as a placeholder; it should include PRN codes,
+					# navigation data, Doppler, and related effects in the real implementation
 					t = np.arange(chunk) / fs
 					iq = np.zeros(chunk, dtype=np.complex64)
 					
 					for sat_name, sat_data in results.items():
-						# 简化的载波生成
-						freq = 1575.42e6 + sat_data['shift']  # L1 + 多普勒
+						# Simplified carrier generation
+						freq = 1575.42e6 + sat_data['shift']  # L1 + Doppler
 						phase = 2 * np.pi * freq * t
-						# 这里应加入 PRN 码和导航数据调制
+						# PRN code and navigation data modulation should be added here
 						carrier = np.exp(1j * phase) * np.sqrt(sat_data['power'] / 100.0)
 						iq += carrier
 					
-					# 归一化并发送
+					# Normalize and transmit
 					iq = iq / np.max(np.abs(iq)) if np.max(np.abs(iq)) > 0 else iq
 					self._last_chunk = iq
 					self._tx.tx(iq)
@@ -243,7 +244,7 @@ class PlutoStreamer(QtCore.QObject):
 					count += chunk
 					current_time += dt_step
 					
-					# 统计速率
+					# Update throughput statistics
 					if count >= fs:
 						elapsed = time.time() - start
 						if elapsed > 0:
@@ -251,7 +252,7 @@ class PlutoStreamer(QtCore.QObject):
 						start = time.time()
 						count = 0
 					
-					# 控制发送速率
+					# Control the transmit rate
 					time.sleep(chunk / fs)
 				
 			except Exception as e:
@@ -305,7 +306,7 @@ class PlutoStreamer(QtCore.QObject):
 class MainWindow(QtWidgets.QMainWindow):
 	def __init__(self):
 		super().__init__()
-		self.setWindowTitle("Pluto GNSS 发射控制台")
+		self.setWindowTitle("Pluto GNSS Transmission Console")
 		self.resize(1200, 800)
 		self.setMinimumSize(1000, 700)
 
@@ -315,7 +316,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self._wire()
 
 	def _apply_style(self):
-		"""应用新拟态风格样式"""
+		"""Apply the neumorphic visual style."""
 		self.setStyleSheet("""
 			QMainWindow {
 				background: qlineargradient(x1:0, y1:0, x2:1, y2:1, 
@@ -471,9 +472,9 @@ class MainWindow(QtWidgets.QMainWindow):
 		layout.setSpacing(20)
 		layout.setContentsMargins(20, 20, 20, 20)
 
-		# 标题区域
+		# Title area
 		title_layout = QtWidgets.QHBoxLayout()
-		title_label = QtWidgets.QLabel("🛰️ Pluto GNSS 发射控制台")
+		title_label = QtWidgets.QLabel("🛰️ Pluto GNSS Transmission Console")
 		title_label.setStyleSheet("""
 			QLabel {
 				font-size: 24px;
@@ -486,15 +487,15 @@ class MainWindow(QtWidgets.QMainWindow):
 		title_layout.addStretch()
 		layout.addLayout(title_layout)
 
-		# 主要内容区域 - 使用网格布局
+		# Main content area using a grid layout
 		main_layout = QtWidgets.QHBoxLayout()
 		
-		# 左侧控制面板
+		# Left control panel
 		left_panel = QtWidgets.QVBoxLayout()
 		left_panel.setSpacing(15)
 
 		# Device settings
-		dev_group = QtWidgets.QGroupBox("📡 Pluto 设备配置")
+		dev_group = QtWidgets.QGroupBox("📡 Pluto Device Settings")
 		dev_form = QtWidgets.QFormLayout(dev_group)
 		dev_form.setSpacing(12)
 		self.uri_edit = QtWidgets.QLineEdit("ip:192.168.2.1")
@@ -502,23 +503,23 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.fc_edit = QtWidgets.QLineEdit("1575420000")
 		self.gain_edit = QtWidgets.QLineEdit("-20")
 		self.bw_edit = QtWidgets.QLineEdit("")
-		dev_form.addRow("🌐 设备 URI", self.uri_edit)
-		dev_form.addRow("📊 采样率 (Hz)", self.fs_edit)
-		dev_form.addRow("📡 载频 (Hz)", self.fc_edit)
-		dev_form.addRow("⚡ 发射衰减 (dB)", self.gain_edit)
-		dev_form.addRow("📶 射频带宽 (Hz)", self.bw_edit)
+		dev_form.addRow("🌐 Device URI", self.uri_edit)
+		dev_form.addRow("📊 Sample Rate (Hz)", self.fs_edit)
+		dev_form.addRow("📡 Center Frequency (Hz)", self.fc_edit)
+		dev_form.addRow("⚡ TX Attenuation (dB)", self.gain_edit)
+		dev_form.addRow("📶 RF Bandwidth (Hz)", self.bw_edit)
 		left_panel.addWidget(dev_group)
 
 		# Source settings
-		src_group = QtWidgets.QGroupBox("🎯 信号源配置")
+		src_group = QtWidgets.QGroupBox("🎯 Signal Source Settings")
 		src_v = QtWidgets.QVBoxLayout(src_group)
 		src_v.setSpacing(15)
 		
-		# 模式选择
+		# Mode selection
 		mode_layout = QtWidgets.QHBoxLayout()
-		mode_layout.addWidget(QtWidgets.QLabel("📋 信号源模式:"))
+		mode_layout.addWidget(QtWidgets.QLabel("📋 Source Mode:"))
 		self.mode_combo = QtWidgets.QComboBox()
-		self.mode_combo.addItems(["📁 SIGMF 文件", "🌐 TCP 流", "🛰️ 导航生成器"])
+		self.mode_combo.addItems(["📁 SIGMF File", "🌐 TCP Stream", "🛰️ Navigation Generator"])
 		self.mode_combo.setMinimumWidth(200)
 		mode_layout.addWidget(self.mode_combo)
 		mode_layout.addStretch()
@@ -528,13 +529,13 @@ class MainWindow(QtWidgets.QMainWindow):
 		sigmf_form = QtWidgets.QFormLayout()
 		sigmf_form.setSpacing(10)
 		self.sigmf_path = QtWidgets.QLineEdit("data/OutputIQ.sigmf-data")
-		self.sigmf_browse = QtWidgets.QPushButton("📁 浏览")
+		self.sigmf_browse = QtWidgets.QPushButton("📁 Browse")
 		self.sigmf_browse.setMaximumWidth(100)
 		row = QtWidgets.QHBoxLayout()
 		row.addWidget(self.sigmf_path)
 		row.addWidget(self.sigmf_browse)
-		sigmf_form.addRow("📄 .sigmf-data 路径", row)
-		self.sigmf_repeat = QtWidgets.QCheckBox("🔄 循环播放")
+		sigmf_form.addRow("📄 .sigmf-data Path", row)
+		self.sigmf_repeat = QtWidgets.QCheckBox("🔄 Loop Playback")
 		self.sigmf_repeat.setChecked(True)
 		sigmf_form.addRow(self.sigmf_repeat)
 		src_v.addLayout(sigmf_form)
@@ -545,15 +546,15 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.tcp_port = QtWidgets.QLineEdit("57001")
 		self.tcp_dtype = QtWidgets.QComboBox()
 		self.tcp_dtype.addItems(["int8", "float32"])
-		tcp_form.addRow("🌐 主机地址", self.tcp_host)
-		tcp_form.addRow("🔌 端口号", self.tcp_port)
-		tcp_form.addRow("📊 数据类型", self.tcp_dtype)
+		tcp_form.addRow("🌐 Host Address", self.tcp_host)
+		tcp_form.addRow("🔌 Port", self.tcp_port)
+		tcp_form.addRow("📊 Data Type", self.tcp_dtype)
 		src_v.addLayout(tcp_form)
 
 		left_panel.addWidget(src_group)
 
-		# 生成器（RINEX 选择、时间/位置）
-		gen_group = QtWidgets.QGroupBox("🛰️ 导航生成器设置")
+		# Generator settings (RINEX selection, time, and position)
+		gen_group = QtWidgets.QGroupBox("🛰️ Navigation Generator Settings")
 		gen_form = QtWidgets.QFormLayout(gen_group)
 		self.gen_gps = QtWidgets.QLineEdit("")
 		self.gen_gln = QtWidgets.QLineEdit("")
@@ -562,14 +563,14 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.gen_nav_browse_btns = []
 		for label, line in [("🛰️ GPS RINEX", self.gen_gps), ("🌍 GLONASS RINEX", self.gen_gln), ("🇪🇺 Galileo RINEX", self.gen_gal), ("🇨🇳 BeiDou RINEX", self.gen_bds)]:
 			row = QtWidgets.QHBoxLayout()
-			btn = QtWidgets.QPushButton("📁 浏览")
+			btn = QtWidgets.QPushButton("📁 Browse")
 			btn.setMaximumWidth(80)
 			self.gen_nav_browse_btns.append((btn, line))
 			row.addWidget(line)
 			row.addWidget(btn)
 			gen_form.addRow(label, row)
-		# 一键导入星历
-		self.auto_nav_btn = QtWidgets.QPushButton("🔍 一键导入星历(扫描 data/)")
+		# One-click ephemeris import
+		self.auto_nav_btn = QtWidgets.QPushButton("🔍 Auto-import Ephemeris (scan data/)")
 		self.auto_nav_btn.setStyleSheet("""
 			QPushButton {
 				background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -586,52 +587,52 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.gen_lat = QtWidgets.QLineEdit("")
 		self.gen_lon = QtWidgets.QLineEdit("")
 		self.gen_alt = QtWidgets.QLineEdit("")
-		# 模式：静态/轨迹
-		self.gen_mode_static = QtWidgets.QRadioButton("📍 静态位置")
-		self.gen_mode_track = QtWidgets.QRadioButton("🛣️ 轨迹($GPGGA)")
+		# Mode: static or track-based
+		self.gen_mode_static = QtWidgets.QRadioButton("📍 Static Position")
+		self.gen_mode_track = QtWidgets.QRadioButton("🛣️ Track ($GPGGA)")
 		self.gen_mode_static.setChecked(True)
 		mode_row = QtWidgets.QHBoxLayout()
 		mode_row.addWidget(self.gen_mode_static)
 		mode_row.addWidget(self.gen_mode_track)
-		# 轨迹(GPGGA)
+		# Track input (GPGGA)
 		self.gen_gpgga = QtWidgets.QLineEdit("")
 		gpgga_row = QtWidgets.QHBoxLayout()
-		self.gen_gpgga_btn = QtWidgets.QPushButton("📁 浏览")
+		self.gen_gpgga_btn = QtWidgets.QPushButton("📁 Browse")
 		self.gen_gpgga_btn.setMaximumWidth(80)
 		gpgga_row.addWidget(self.gen_gpgga)
 		gpgga_row.addWidget(self.gen_gpgga_btn)
-		gen_form.addRow("⏰ 起始时间(YYYY-MM-DD HH:MM:SS)", self.gen_start_time)
-		gen_form.addRow("⏱️ 持续时长(秒)", self.gen_duration_s)
-		gen_form.addRow("🌍 纬度(度)", self.gen_lat)
-		gen_form.addRow("🌐 经度(度)", self.gen_lon)
-		gen_form.addRow("⛰️ 高度(米)", self.gen_alt)
-		gen_form.addRow("🎯 位置模式", mode_row)
-		gen_form.addRow("📄 轨迹文件($GPGGA)", gpgga_row)
+		gen_form.addRow("⏰ Start Time (YYYY-MM-DD HH:MM:SS)", self.gen_start_time)
+		gen_form.addRow("⏱️ Duration (s)", self.gen_duration_s)
+		gen_form.addRow("🌍 Latitude (deg)", self.gen_lat)
+		gen_form.addRow("🌐 Longitude (deg)", self.gen_lon)
+		gen_form.addRow("⛰️ Altitude (m)", self.gen_alt)
+		gen_form.addRow("🎯 Position Mode", mode_row)
+		gen_form.addRow("📄 Track File ($GPGGA)", gpgga_row)
 		left_panel.addWidget(gen_group)
 
-		# 控制按钮区域
-		ctrl_group = QtWidgets.QGroupBox("🎮 发射控制")
+		# Control button area
+		ctrl_group = QtWidgets.QGroupBox("🎮 Transmission Control")
 		ctrl_layout = QtWidgets.QVBoxLayout(ctrl_group)
 		ctrl_layout.setSpacing(15)
 		
-		# 分块设置
+		# Chunk size settings
 		chunk_layout = QtWidgets.QHBoxLayout()
-		chunk_layout.addWidget(QtWidgets.QLabel("📦 分块大小:"))
+		chunk_layout.addWidget(QtWidgets.QLabel("📦 Chunk Size:"))
 		self.chunk_edit = QtWidgets.QLineEdit("16384")
 		self.chunk_edit.setMaximumWidth(120)
 		chunk_layout.addWidget(self.chunk_edit)
 		chunk_layout.addStretch()
 		ctrl_layout.addLayout(chunk_layout)
 		
-		# 按钮行
+		# Button row
 		btn_row = QtWidgets.QHBoxLayout()
 		btn_row.setSpacing(10)
-		self.probe_btn = QtWidgets.QPushButton("🔍 探测")
-		self.start_btn = QtWidgets.QPushButton("🚀 开始发射")
-		self.stop_btn = QtWidgets.QPushButton("⏹️ 停止")
+		self.probe_btn = QtWidgets.QPushButton("🔍 Probe")
+		self.start_btn = QtWidgets.QPushButton("🚀 Start Transmission")
+		self.stop_btn = QtWidgets.QPushButton("⏹️ Stop")
 		self.stop_btn.setEnabled(False)
 		
-		# 按钮样式
+		# Button styling
 		self.start_btn.setStyleSheet("""
 			QPushButton {
 				background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -661,33 +662,33 @@ class MainWindow(QtWidgets.QMainWindow):
 		
 		left_panel.addWidget(ctrl_group)
 		
-		# 将左侧面板添加到主布局
+		# Add the left panel to the main layout
 		left_widget = QtWidgets.QWidget()
 		left_widget.setLayout(left_panel)
 		left_widget.setMaximumWidth(450)
 		main_layout.addWidget(left_widget)
 
-		# 右侧频谱区域
+		# Right-side spectrum area
 		right_panel = QtWidgets.QVBoxLayout()
 		right_panel.setSpacing(15)
 		
 		# Spectrum/Waterfall
-		plot_group = QtWidgets.QGroupBox("📊 频谱预览（最近缓冲）")
+		plot_group = QtWidgets.QGroupBox("📊 Spectrum Preview (Latest Buffer)")
 		plot_v = QtWidgets.QVBoxLayout(plot_group)
 		plot_v.setSpacing(10)
 		self.plot = pg.PlotWidget()
 		self.plot.setBackground('w')
 		self.curve = self.plot.plot(np.zeros(1024), pen=pg.mkPen(color='#3498db', width=2))
 		self.plot.setLabel("left", "dBFS", color='#2c3e50', size='12pt')
-		self.plot.setLabel("bottom", "频率 Bin", color='#2c3e50', size='12pt')
+		self.plot.setLabel("bottom", "Frequency Bin", color='#2c3e50', size='12pt')
 		self.plot.showGrid(x=True, y=True, alpha=0.3)
 		plot_v.addWidget(self.plot)
 		right_panel.addWidget(plot_group)
 		
-		# 状态栏
-		status_group = QtWidgets.QGroupBox("📈 系统状态")
+		# Status area
+		status_group = QtWidgets.QGroupBox("📈 System Status")
 		status_layout = QtWidgets.QVBoxLayout(status_group)
-		self.status = QtWidgets.QLabel("💤 空闲")
+		self.status = QtWidgets.QLabel("💤 Idle")
 		self.status.setStyleSheet("""
 			QLabel {
 				font-size: 14px;
@@ -702,12 +703,12 @@ class MainWindow(QtWidgets.QMainWindow):
 		status_layout.addWidget(self.status)
 		right_panel.addWidget(status_group)
 		
-		# 将右侧面板添加到主布局
+		# Add the right panel to the main layout
 		right_widget = QtWidgets.QWidget()
 		right_widget.setLayout(right_panel)
 		main_layout.addWidget(right_widget)
 		
-		# 将主布局添加到总布局
+		# Add the main layout to the root layout
 		layout.addLayout(main_layout)
 
 	def _wire(self):
@@ -741,12 +742,12 @@ class MainWindow(QtWidgets.QMainWindow):
 			self.sigmf_path.setText(path)
 
 	def _choose_rinex(self, line_edit: QtWidgets.QLineEdit):
-		path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "选择 RINEX 导航文件", os.getcwd(), "RINEX (*.rnx *.24* *.n *.g *.l *.q);;所有文件 (*.*)")
+		path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select RINEX Navigation File", os.getcwd(), "RINEX (*.rnx *.24* *.n *.g *.l *.q);;All files (*.*)")
 		if path:
 			line_edit.setText(path)
 
 	def _choose_gpgga(self):
-		path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "选择 $GPGGA 轨迹文件", os.getcwd(), "NMEA (*.nmea *.log *.txt);;所有文件 (*.*)")
+		path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select $GPGGA Track File", os.getcwd(), "NMEA (*.nmea *.log *.txt);;All files (*.*)")
 		if path:
 			self.gen_gpgga.setText(path)
 
@@ -762,18 +763,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
 			chunk = int(self.chunk_edit.text())
 			mode = self.mode_combo.currentText()
-			if mode == "SIGMF 文件":
+			if mode == "📁 SIGMF File":
 				data_path = self.sigmf_path.text().strip()
 				if not os.path.isfile(data_path):
 					raise RuntimeError(".sigmf-data not found")
 				self.streamer.start_sigmf(data_path, None, self.sigmf_repeat.isChecked(), chunk)
-			elif mode == "TCP 流":
+			elif mode == "🌐 TCP Stream":
 				host = self.tcp_host.text().strip()
 				port = int(self.tcp_port.text())
 				dtype = self.tcp_dtype.currentText()
 				self.streamer.start_tcp(host, port, dtype, chunk)
 			else:
-				# 导航生成器实时生成
+				# Generate navigation data in real time
 				rinex_files = {
 					"GPS": self.gen_gps.text().strip(),
 					"GLONASS": self.gen_gln.text().strip(),
@@ -781,10 +782,10 @@ class MainWindow(QtWidgets.QMainWindow):
 					"BeiDou": self.gen_bds.text().strip()
 				}
 				
-				# 过滤空文件
+				# Filter out empty file entries
 				rinex_files = {k: v for k, v in rinex_files.items() if v and os.path.isfile(v)}
 				if not rinex_files:
-					raise RuntimeError("请至少选择一个有效的 RINEX 文件")
+					raise RuntimeError("Please select at least one valid RINEX file")
 				
 				start_time = self.gen_start_time.text().strip()
 				if not start_time:
@@ -794,7 +795,7 @@ class MainWindow(QtWidgets.QMainWindow):
 				is_static = self.gen_mode_static.isChecked()
 				
 				if is_static:
-					# 静态模式
+					# Static mode
 					lat = float(self.gen_lat.text().strip())
 					lon = float(self.gen_lon.text().strip())
 					alt = float(self.gen_alt.text().strip())
@@ -803,15 +804,15 @@ class MainWindow(QtWidgets.QMainWindow):
 						lat, lon, alt, "", True, chunk
 					)
 				else:
-					# 轨迹模式
+					# Track mode
 					gpgga_path = self.gen_gpgga.text().strip()
 					if not gpgga_path or not os.path.isfile(gpgga_path):
-						raise RuntimeError("请选择有效的 GPGGA 轨迹文件")
+						raise RuntimeError("Please select a valid GPGGA track file")
 					
-					# 验证轨迹文件
+					# Validate the track file
 					track_points = self._parse_gpgga(gpgga_path)
 					if not track_points:
-						raise RuntimeError("轨迹文件解析失败或为空")
+						raise RuntimeError("Track file could not be parsed or is empty")
 					
 					self.streamer.start_generator(
 						rinex_files, start_time, duration_s,
@@ -827,7 +828,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.start_btn.setEnabled(not running)
 		self.stop_btn.setEnabled(running)
 		if running:
-			self.status.setText("🚀 发射中")
+			self.status.setText("🚀 Transmitting")
 			self.status.setStyleSheet("""
 				QLabel {
 					font-size: 14px;
@@ -840,7 +841,7 @@ class MainWindow(QtWidgets.QMainWindow):
 				}
 			""")
 		else:
-			self.status.setText("💤 空闲")
+			self.status.setText("💤 Idle")
 			self.status.setStyleSheet("""
 				QLabel {
 					font-size: 14px;
@@ -854,11 +855,11 @@ class MainWindow(QtWidgets.QMainWindow):
 			""")
 
 	def _on_error(self, msg: str):
-		QtWidgets.QMessageBox.critical(self, "错误", msg)
-		self.status.setText(f"错误: {msg}")
+		QtWidgets.QMessageBox.critical(self, "Error", msg)
+		self.status.setText(f"Error: {msg}")
 
 	def _on_stats(self, rate: float):
-		self.status.setText(f"🚀 发射中 ~{rate/1e6:.2f} MS/s")
+		self.status.setText(f"🚀 Transmitting ~{rate/1e6:.2f} MS/s")
 		self.status.setStyleSheet("""
 			QLabel {
 				font-size: 14px;
@@ -882,7 +883,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.curve.setData(psd)
 
 	def _auto_import_ephemeris(self):
-		"""扫描 data/ 目录，为各星座自动填入一个最近的 RINEX 文件。"""
+		"""Scan the data/ directory and auto-fill the most recent RINEX file for each constellation."""
 		base = os.path.abspath(os.path.join(os.getcwd(), 'data'))
 		candidates = {
 			'GPS': ['.24n', '.n'],
@@ -916,15 +917,15 @@ class MainWindow(QtWidgets.QMainWindow):
 		if 'BeiDou' in found:
 			self.gen_bds.setText(found['BeiDou'])
 		if not found:
-			QtWidgets.QMessageBox.warning(self, "提示", "未在 data/ 下找到可用 RINEX 文件。")
+			QtWidgets.QMessageBox.warning(self, "Notice", "No usable RINEX files found under data/.")
 		else:
 			msg = [f"{k}: {v}" for k, v in found.items()]
-			QtWidgets.QMessageBox.information(self, "已导入星历", "\n".join(msg))
+			QtWidgets.QMessageBox.information(self, "Ephemeris Imported", "\n".join(msg))
 
 	def _parse_gpgga(self, path: str):
 		"""
-		简易 $GPGGA 解析：返回 [(datetime, lat, lon, alt), ...]
-		支持格式: $GPGGA,hhmmss.sss,lat,NS,lon,EW,fix,nsat,hdop,alt,M,geoid,M,age,ref*cs
+		Simple $GPGGA parser: returns [(datetime, lat, lon, alt), ...]
+		Supported format: $GPGGA,hhmmss.sss,lat,NS,lon,EW,fix,nsat,hdop,alt,M,geoid,M,age,ref*cs
 		"""
 		from datetime import datetime
 		def nmea_latlon_to_deg(val: str, hemi: str, is_lat: bool) -> float:
@@ -969,7 +970,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		return pts
 
 	def _probe(self):
-		# 检查 DLL 是否在当前目录或 PATH 中（Windows）
+		# Check whether the DLLs are in the current directory or on PATH (Windows)
 		missing = []
 		for dll in ["libiio.dll", "libad9361.dll"]:
 			found = False
@@ -992,21 +993,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		msg = []
 		msg.append(f"URI: {uri}")
-		msg.append(f"配置: 采样率 {fs} Hz, 载频 {fc} Hz, 衰减 {attn} dB")
+		msg.append(f"Configuration: sample rate {fs} Hz, center frequency {fc} Hz, attenuation {attn} dB")
 		if missing:
-			msg.append("缺少 DLL: " + ", ".join(missing))
+			msg.append("Missing DLLs: " + ", ".join(missing))
 		else:
-			msg.append("已找到 DLL（当前目录或 PATH）")
+			msg.append("DLLs found (current directory or PATH)")
 
 		# Try to open Pluto
 		try:
 			if adi is None:
-				raise RuntimeError("未安装 pyadi-iio")
+				raise RuntimeError("pyadi-iio is not installed")
 			d = adi.Pluto(uri)
-			msg.append(f"已连接: fs={d.sample_rate}, 载频={d.tx_lo}, 带宽={getattr(d, 'tx_rf_bandwidth', 'n/a')}")
+			msg.append(f"Connected: fs={d.sample_rate}, center frequency={d.tx_lo}, bandwidth={getattr(d, 'tx_rf_bandwidth', 'n/a')}")
 		except Exception as e:
-			msg.append(f"连接失败: {e}")
-		QtWidgets.QMessageBox.information(self, "探测结果", "\n".join(msg))
+			msg.append(f"Connection failed: {e}")
+		QtWidgets.QMessageBox.information(self, "Probe Results", "\n".join(msg))
 
 
 def main():

@@ -1,306 +1,306 @@
-# GNSS SDR Simulator - 详细文件结构说明
+# GNSS SDR Simulator - Detailed File Structure Guide
 
-## 项目概述
-这是一个全面的GNSS（全球导航卫星系统）软件定义无线电（SDR）信号仿真器，支持GPS、Galileo、BeiDou、GLONASS、IRNSS、QZSS和SBAS信号生成。项目包含Python仿真、C++实现、FPGA硬件设计等多个模块。
+## Project Overview
+This is a comprehensive GNSS (Global Navigation Satellite System) software-defined radio (SDR) signal simulator that supports GPS, Galileo, BeiDou, GLONASS, IRNSS, QZSS, and SBAS signal generation. The project includes multiple modules covering Python-based simulation, C++ implementations, FPGA hardware design, and more.
 
-## 目录结构
+## Directory Structure
 
-### 📁 根目录文件
-- **README.MD** - 项目基本说明和使用指南
-- **FILE_STRUCTURE.md** - 本文件，详细的项目文件结构说明
-- **networkedSDR.grc** - GNU Radio Companion流程图文件
-- **networkedSDR.py** - GNU Radio Python脚本，用于网络SDR配置
-- **libad9361.dll** - AD9361射频前端库文件
-- **libiio.dll** - IIO（Industrial I/O）库文件
-
----
-
-## 🐍 GNSS-sim-python/ - Python仿真模块
-
-### 核心仿真文件
-- **main.py** - 主仿真程序，生成GNSS信号数据和时间延迟文件
-- **const.py** - 全局常量定义（光速、地球参数等）
-- **Satallite.py** - 卫星类定义和轨道计算
-- **orbit.py** - 轨道力学计算（传播时间、多普勒频移、可见性）
-- **NavMessage.py** - 导航消息生成和处理
-- **RINEX.py** - RINEX格式导航文件解析器
-- **ionosphere.py** - 电离层延迟模型
-
-### 星座系统实现
-- **GPS.py** - GPS L1 C/A信号实现
-  - 支持GPS星座的RINEX数据解析
-  - 包含PRN码生成、导航消息格式
-  - 频率：1575.42 MHz
-- **Galileo.py** - Galileo E1信号实现
-  - 支持Galileo星座的RINEX数据解析
-  - 包含CBOC调制、导航消息格式
-  - 频率：1575.42 MHz
-- **Glonass.py** - GLONASS L1信号实现
-  - 支持GLONASS星座的RINEX数据解析
-  - 包含FDMA频率分配、导航消息格式
-  - 频率：1602 MHz + k×562.5 kHz
-- **BeiDou.py** - BeiDou B1I信号实现
-  - 支持BeiDou星座的RINEX数据解析
-  - 包含导航消息格式和轨道计算
-  - 频率：1561.098 MHz
-- **IRNSS.py** - IRNSS L5信号实现
-  - 支持IRNSS星座的RINEX数据解析
-  - 包含导航消息格式
-  - 频率：1176.45 MHz
-- **Constelation.py** - 星座基类定义
-
-### 辅助工具
-- **sampleGeneration.py** - 样本生成工具
-- **mixFiles.py** - 文件混合工具
-- **mulSatpos.py** - 多卫星位置计算
-- **steering.py** - 天线指向控制
-- **testAltMethode.py** - 测试替代方法
-- **testplot.py** - 测试绘图工具
-- **client.py** - 客户端通信模块
-- **pluto_studio.py** - ADALM-Pluto SDR工作室界面
-- **pluto_tx.py** - ADALM-Pluto SDR发射器
+### 📁 Root Directory Files
+- **README.MD** - Basic project overview and usage guide
+- **FILE_STRUCTURE.md** - This file, a detailed explanation of the project file structure
+- **networkedSDR.grc** - GNU Radio Companion flowgraph file
+- **networkedSDR.py** - GNU Radio Python script for network SDR configuration
+- **libad9361.dll** - AD9361 RF front-end library
+- **libiio.dll** - IIO (Industrial I/O) library
 
 ---
 
-## ⚙️ GNSS-sim-C/ - C++实现模块
+## 🐍 GNSS-sim-python/ - Python Simulation Module
 
-### 核心C++文件
-- **GNSS-sim-C.cpp** - C++主程序，高性能信号生成
-- **Manager.h** - 管理器类，协调信号生成流程
-- **ChainLink.h** - 信号处理链组件
-- **DataFrame.h** - 数据帧结构定义
-- **DataHandler.h** - 数据处理器
-- **DataHandler2.h** - 数据处理器第二版
-- **FileSource.h** - 文件输入源
-- **FileSink.h** - 文件输出汇
-- **NetworkSink.h** - 网络输出汇
-- **Server.h** - 网络服务器
-- **Parse.h** - 数据解析器
-- **Resample.h** - 重采样器
-- **Resample2.h** - 重采样器第二版
-- **Satellite.h** - 卫星类
-- **WeilCode.h** - Weil码生成器
+### Core Simulation Files
+- **main.py** - Main simulation program for generating GNSS signal data and time-delay files
+- **const.py** - Global constant definitions (speed of light, Earth parameters, etc.)
+- **Satallite.py** - Satellite class definitions and orbit calculations
+- **orbit.py** - Orbital mechanics calculations (propagation time, Doppler shift, visibility)
+- **NavMessage.py** - Navigation message generation and handling
+- **RINEX.py** - RINEX-format navigation file parser
+- **ionosphere.py** - Ionospheric delay model
 
-### 星座特定实现
-#### GPS模块 (GPS/)
-- **Sat.h** - GPS卫星类
-- **PRN_Code.h** - GPS PRN码生成器
-- **Modulation.h** - GPS调制器
-- **L1c/** - GPS L1C信号实现
+### Constellation Implementations
+- **GPS.py** - GPS L1 C/A signal implementation
+  - Supports RINEX data parsing for the GPS constellation
+  - Includes PRN code generation and navigation message formatting
+  - Frequency: 1575.42 MHz
+- **Galileo.py** - Galileo E1 signal implementation
+  - Supports RINEX data parsing for the Galileo constellation
+  - Includes CBOC modulation and navigation message formatting
+  - Frequency: 1575.42 MHz
+- **Glonass.py** - GLONASS L1 signal implementation
+  - Supports RINEX data parsing for the GLONASS constellation
+  - Includes FDMA frequency allocation and navigation message formatting
+  - Frequency: 1602 MHz + k x 562.5 kHz
+- **BeiDou.py** - BeiDou B1I signal implementation
+  - Supports RINEX data parsing for the BeiDou constellation
+  - Includes navigation message formatting and orbit calculations
+  - Frequency: 1561.098 MHz
+- **IRNSS.py** - IRNSS L5 signal implementation
+  - Supports RINEX data parsing for the IRNSS constellation
+  - Includes navigation message formatting
+  - Frequency: 1176.45 MHz
+- **Constelation.py** - Base constellation class definitions
+
+### Utility Tools
+- **sampleGeneration.py** - Sample generation utility
+- **mixFiles.py** - File mixing utility
+- **mulSatpos.py** - Multi-satellite position calculation
+- **steering.py** - Antenna steering control
+- **testAltMethode.py** - Alternative method test
+- **testplot.py** - Plotting test utility
+- **client.py** - Client communication module
+- **pluto_studio.py** - ADALM-Pluto SDR studio interface
+- **pluto_tx.py** - ADALM-Pluto SDR transmitter
+
+---
+
+## ⚙️ GNSS-sim-C/ - C++ Implementation Module
+
+### Core C++ Files
+- **GNSS-sim-C.cpp** - Main C++ program for high-performance signal generation
+- **Manager.h** - Manager class coordinating the signal generation workflow
+- **ChainLink.h** - Signal-processing chain component
+- **DataFrame.h** - Data frame structure definitions
+- **DataHandler.h** - Data handler
+- **DataHandler2.h** - Version 2 of the data handler
+- **FileSource.h** - File input source
+- **FileSink.h** - File output sink
+- **NetworkSink.h** - Network output sink
+- **Server.h** - Network server
+- **Parse.h** - Data parser
+- **Resample.h** - Resampler
+- **Resample2.h** - Version 2 of the resampler
+- **Satellite.h** - Satellite class
+- **WeilCode.h** - Weil code generator
+
+### Constellation-Specific Implementations
+#### GPS Module (GPS/)
+- **Sat.h** - GPS satellite class
+- **PRN_Code.h** - GPS PRN code generator
+- **Modulation.h** - GPS modulator
+- **L1c/** - GPS L1C signal implementation
   - Modulation.h, PRN_Code.h, Sat.h
-- **L2c/** - GPS L2C信号实现
+- **L2c/** - GPS L2C signal implementation
   - Modulation.h, PRN_Code.h, Sat.h
-- **L5/** - GPS L5信号实现
+- **L5/** - GPS L5 signal implementation
   - Sat.h
 
-#### Galileo模块 (Galileo/)
-- **Sat.h** - Galileo卫星类
-- **PRN_Code.h** - Galileo PRN码生成器
-- **Carrier.h** - Galileo载波生成
-- **CBOC.h** - CBOC调制器
+#### Galileo Module (Galileo/)
+- **Sat.h** - Galileo satellite class
+- **PRN_Code.h** - Galileo PRN code generator
+- **Carrier.h** - Galileo carrier generation
+- **CBOC.h** - CBOC modulator
 
-#### 其他星座模块
-- **BeiDou/** - BeiDou B1C信号实现
-- **Glonass/** - GLONASS信号实现
-- **IRNSS/** - IRNSS信号实现
+#### Other Constellation Modules
+- **BeiDou/** - BeiDou B1C signal implementation
+- **Glonass/** - GLONASS signal implementation
+- **IRNSS/** - IRNSS signal implementation
 
-### 支持文件
-- **IQ.h** - IQ数据格式定义
-- **FPGA_data.h** - FPGA数据传输格式
-
----
-
-## 🔧 GNSS-sim-fpga/ - FPGA硬件实现
-
-### HDL版本1 (HDL/)
-- **Top.vhd** - 顶层FPGA设计
-- **Constants.vhd** - 常量定义
-- **DataSource.vhd** - 数据源模块
-- **DopplerUpsample.vhd** - 多普勒上采样器
-- **ExampleSource.vhd** - 示例数据源
-- **FrameHandler.vhd** - 帧处理器
-- **Mixer.vhd** - 混频器
-- **Chanel.vhd** - 通道处理器
-
-#### 通信模块 (comminucation/)
-- **ClockDiv16.vhd** - 时钟分频器
-- **FIFO.vhd** - 先进先出缓冲区
-- **InputHandler.vhd** - 输入处理器
-- **OutputHandler.vhd** - 输出处理器
-- **SPI.vhd** - SPI通信协议
-
-#### 简单信号 (simplesignals/)
-- **GlonassModulation.vhd** - GLONASS调制器
-
-#### 测试台 (testbenches/)
-- 各种VHDL测试台文件
-
-### HDL版本2 (HDL2/) - 改进版本
-- **Top.vhd** - 改进的顶层设计
-- **ChanelsHandler.vhd** - 通道处理器
-- **DopplerUpsample.vhd** - 多普勒上采样器
-- **FrameHandler.vhd** - 帧处理器
-- **Mixer.vhd** - 混频器
-- **Modulation.vhd** - 通用调制器
-- **RegisterInterface.vhd** - 寄存器接口
-
-#### 星座特定FPGA实现
-- **GPS/** - GPS FPGA实现
-- **Galileo/** - Galileo FPGA实现
-- **BeiDou/** - BeiDou FPGA实现
-- **Glonass/** - GLONASS FPGA实现
-- **IRNSS/** - IRNSS FPGA实现
-
-#### 通信模块 (communication/)
-- **ClockDiv16.vhd** - 时钟分频器
-- **FIFO.vhd** - 先进先出缓冲区
-- **SPI.vhd** - SPI通信协议
-- **UART_RX.vhd** - UART接收器
-- **UART_TX.vhd** - UART发射器
-
-### ISE项目文件
-- **ISE/** - Xilinx ISE项目文件
-- **ISE2/** - 第二个ISE项目
-- **Top.ucf** - 引脚约束文件
-- **LogicAnalyzerSettings.kvset** - 逻辑分析仪设置
+### Supporting Files
+- **IQ.h** - IQ data format definitions
+- **FPGA_data.h** - FPGA data transfer format
 
 ---
 
-## 🔌 GNSS-sim-fpga-io/ - FPGA接口模块
+## 🔧 GNSS-sim-fpga/ - FPGA Hardware Implementation
 
-### Arduino接口代码
-- **GNSS-sim-fpga-io.ino** - 主Arduino程序
-- **fpgaInterface.h** - FPGA接口定义
-- **dataFrame.h** - 数据帧结构
-- **parsing.h** - 数据解析
-- **IQ.h** - IQ数据格式
-- **delayStepCheck.py** - 延迟步长检查
-- **delay_step_formulas.txt** - 延迟步长公式
-- **pynq_transmit.py** - PYNQ传输脚本
-- **transmit.py** - 传输脚本
+### HDL Version 1 (HDL/)
+- **Top.vhd** - Top-level FPGA design
+- **Constants.vhd** - Constant definitions
+- **DataSource.vhd** - Data source module
+- **DopplerUpsample.vhd** - Doppler upsampler
+- **ExampleSource.vhd** - Example data source
+- **FrameHandler.vhd** - Frame handler
+- **Mixer.vhd** - Mixer
+- **Chanel.vhd** - Channel processor
 
-### 原始代码 (raw/)
-- **fpgaInterface.h** - 原始FPGA接口
-- **iq.h** - 原始IQ格式
-- **raw.ino** - 原始Arduino代码
+#### Communication Modules (comminucation/)
+- **ClockDiv16.vhd** - Clock divider
+- **FIFO.vhd** - First-in, first-out buffer
+- **InputHandler.vhd** - Input handler
+- **OutputHandler.vhd** - Output handler
+- **SPI.vhd** - SPI communication protocol
 
----
+#### Simple Signals (simplesignals/)
+- **GlonassModulation.vhd** - GLONASS modulator
 
-## 📊 data/ - 数据文件目录
+#### Testbenches (testbenches/)
+- Various VHDL testbench files
 
-### 导航数据文件
-#### GPS数据 (GPS/)
-- **Brdc0530.24n** - 2024年GPS广播星历
-- **brdc3240.23n** - 2023年GPS广播星历
-- **brdc3250.23n** - 2023年GPS广播星历
-- **brdc3260.23n** - 2023年GPS广播星历
+### HDL Version 2 (HDL2/) - Improved Version
+- **Top.vhd** - Improved top-level design
+- **ChanelsHandler.vhd** - Channel processor
+- **DopplerUpsample.vhd** - Doppler upsampler
+- **FrameHandler.vhd** - Frame handler
+- **Mixer.vhd** - Mixer
+- **Modulation.vhd** - Generic modulator
+- **RegisterInterface.vhd** - Register interface
 
-#### Galileo数据 (Galileo/)
-- **Brdc0530.24l** - 2024年Galileo广播星历
-- **C7_E1B.txt** - Galileo E1B信号数据
-- **C8_E1C.txt** - Galileo E1C信号数据
-- **IZMI00TUR_S_20233320000_01D_EN.rnx** - Galileo RINEX文件
+#### Constellation-Specific FPGA Implementations
+- **GPS/** - GPS FPGA implementation
+- **Galileo/** - Galileo FPGA implementation
+- **BeiDou/** - BeiDou FPGA implementation
+- **Glonass/** - GLONASS FPGA implementation
+- **IRNSS/** - IRNSS FPGA implementation
 
-#### GLONASS数据 (Glonass/)
-- **Brdc0070.24g** - 2024年GLONASS广播星历
-- **Brdc0530.24g** - 2024年GLONASS广播星历
-- **ANK200TUR_S_20240110000_01D_RN.rnx** - GLONASS RINEX文件
-- **MCCT_240109.agl** - GLONASS历书文件
-- **MCCT_240109.agp** - GLONASS历书文件
+#### Communication Modules (communication/)
+- **ClockDiv16.vhd** - Clock divider
+- **FIFO.vhd** - First-in, first-out buffer
+- **SPI.vhd** - SPI communication protocol
+- **UART_RX.vhd** - UART receiver
+- **UART_TX.vhd** - UART transmitter
 
-#### 其他星座数据
-- **BeiDou/** - BeiDou导航数据
-- **IRNSS/** - IRNSS导航数据
-- **QZSS/** - QZSS导航数据
-- **SBAS/** - SBAS增强数据
-- **Mixed/** - 混合星座数据
-
-### 输出和工具文件
-- **OutputIQ.sigmf-meta** - IQ输出元数据
-- **compare.py** - IQ数据比较工具
-- **plotIQ.py** - IQ数据绘图工具
-
----
-
-## 🔍 detectors/ - 信号检测模块
-
-- **CN0.py** - 载噪比(C/N0)检测器
-- **energy.py** - 能量检测器
-- **fingers.py** - 相关器组检测器
-- **settings.py** - 检测器设置
+### ISE Project Files
+- **ISE/** - Xilinx ISE project files
+- **ISE2/** - Second ISE project
+- **Top.ucf** - Pin constraint file
+- **LogicAnalyzerSettings.kvset** - Logic analyzer settings
 
 ---
 
-## 🛠️ 技术特性
+## 🔌 GNSS-sim-fpga-io/ - FPGA Interface Module
 
-### 支持的信号类型
+### Arduino Interface Code
+- **GNSS-sim-fpga-io.ino** - Main Arduino program
+- **fpgaInterface.h** - FPGA interface definitions
+- **dataFrame.h** - Data frame structure
+- **parsing.h** - Data parsing
+- **IQ.h** - IQ data format
+- **delayStepCheck.py** - Delay step check
+- **delay_step_formulas.txt** - Delay step formulas
+- **pynq_transmit.py** - PYNQ transmission script
+- **transmit.py** - Transmission script
+
+### Raw Code (raw/)
+- **fpgaInterface.h** - Original FPGA interface
+- **iq.h** - Original IQ format
+- **raw.ino** - Original Arduino code
+
+---
+
+## 📊 data/ - Data File Directory
+
+### Navigation Data Files
+#### GPS Data (GPS/)
+- **Brdc0530.24n** - 2024 GPS broadcast ephemeris
+- **brdc3240.23n** - 2023 GPS broadcast ephemeris
+- **brdc3250.23n** - 2023 GPS broadcast ephemeris
+- **brdc3260.23n** - 2023 GPS broadcast ephemeris
+
+#### Galileo Data (Galileo/)
+- **Brdc0530.24l** - 2024 Galileo broadcast ephemeris
+- **C7_E1B.txt** - Galileo E1B signal data
+- **C8_E1C.txt** - Galileo E1C signal data
+- **IZMI00TUR_S_20233320000_01D_EN.rnx** - Galileo RINEX file
+
+#### GLONASS Data (Glonass/)
+- **Brdc0070.24g** - 2024 GLONASS broadcast ephemeris
+- **Brdc0530.24g** - 2024 GLONASS broadcast ephemeris
+- **ANK200TUR_S_20240110000_01D_RN.rnx** - GLONASS RINEX file
+- **MCCT_240109.agl** - GLONASS almanac file
+- **MCCT_240109.agp** - GLONASS almanac file
+
+#### Other Constellation Data
+- **BeiDou/** - BeiDou navigation data
+- **IRNSS/** - IRNSS navigation data
+- **QZSS/** - QZSS navigation data
+- **SBAS/** - SBAS augmentation data
+- **Mixed/** - Mixed-constellation data
+
+### Output and Utility Files
+- **OutputIQ.sigmf-meta** - IQ output metadata
+- **compare.py** - IQ data comparison utility
+- **plotIQ.py** - IQ data plotting utility
+
+---
+
+## 🔍 detectors/ - Signal Detection Module
+
+- **CN0.py** - Carrier-to-noise ratio (C/N0) detector
+- **energy.py** - Energy detector
+- **fingers.py** - Correlator bank detector
+- **settings.py** - Detector settings
+
+---
+
+## 🛠️ Technical Features
+
+### Supported Signal Types
 1. **GPS L1 C/A** - 1575.42 MHz
 2. **GPS L1C** - 1575.42 MHz
 3. **GPS L2C** - 1227.60 MHz
 4. **GPS L5** - 1176.45 MHz
-5. **Galileo E1** - 1575.42 MHz (CBOC调制)
-6. **GLONASS L1** - 1602 MHz + k×562.5 kHz
+5. **Galileo E1** - 1575.42 MHz (CBOC modulation)
+6. **GLONASS L1** - 1602 MHz + k x 562.5 kHz
 7. **BeiDou B1I** - 1561.098 MHz
 8. **BeiDou B1C** - 1575.42 MHz
 9. **IRNSS L5** - 1176.45 MHz
 10. **QZSS** - 1575.42 MHz
 11. **SBAS** - 1575.42 MHz
 
-### 精度特性
-- GPS、Galileo、GLONASS、IRNSS：0-10米精度（与FGI-GSRx对比）
-- BeiDou：约5公里误差（已知问题待修复）
+### Accuracy Characteristics
+- GPS, Galileo, GLONASS, and IRNSS: 0-10 meter accuracy (compared with FGI-GSRx)
+- BeiDou: approximately 5 km error (known issue pending a fix)
 
-### 硬件支持
-- **ADALM-Pluto SDR** - 射频前端
-- **FPGA** - 硬件加速信号生成
-- **Arduino** - 接口控制
+### Hardware Support
+- **ADALM-Pluto SDR** - RF front end
+- **FPGA** - Hardware-accelerated signal generation
+- **Arduino** - Interface control
 
-### 开发环境
-- **Python 3.x** - 主要仿真环境
-- **Visual Studio 2019** - C++开发
-- **Xilinx ISE** - FPGA开发
-- **Arduino IDE** - 微控制器编程
-- **GNU Radio** - SDR处理
-
----
-
-## 🚀 使用方法
-
-### 基本工作流程
-1. 准备对应星座和时间的RINEX文件
-2. 编辑 `GNSS-sim-python/main.py` 配置文件和参数
-3. 运行 `main.py` 生成数据和延迟文件
-4. 编辑 `GNSS-sim-C/GNSS-sim-C/GNSS-sim-C.cpp` 设置采样率和中心频率
-5. 在Visual Studio中运行C++项目
-6. IQ文件输出到 `data/OutputIQ.sigmf-data`
-
-### 高级功能
-- **实时传输** - 通过ADALM-Pluto SDR实时发射
-- **FPGA加速** - 硬件加速信号生成
-- **网络SDR** - 远程SDR控制
-- **信号分析** - 内置信号质量检测
+### Development Environment
+- **Python 3.x** - Primary simulation environment
+- **Visual Studio 2019** - C++ development
+- **Xilinx ISE** - FPGA development
+- **Arduino IDE** - Microcontroller programming
+- **GNU Radio** - SDR processing
 
 ---
 
-## 📝 注意事项
+## 🚀 Usage
 
-1. **项目状态** - 这是一个正在开发中的项目
-2. **BeiDou精度** - BeiDou实现存在已知的5公里误差问题
-3. **依赖项** - 需要安装相应的Python包和开发工具
-4. **硬件要求** - FPGA和SDR硬件为可选组件
-5. **数据文件** - 需要有效的RINEX导航数据文件
+### Basic Workflow
+1. Prepare the RINEX file matching the desired constellation and time.
+2. Edit the configuration file and parameters in `GNSS-sim-python/main.py`.
+3. Run `main.py` to generate the data and delay files.
+4. Edit `GNSS-sim-C/GNSS-sim-C/GNSS-sim-C.cpp` to set the sample rate and center frequency.
+5. Run the C++ project in Visual Studio.
+6. The IQ file is written to `data/OutputIQ.sigmf-data`.
 
----
-
-## 🤝 贡献指南
-
-这是一个开源项目，欢迎贡献：
-- 报告Bug和问题
-- 提交代码改进
-- 添加新的星座支持
-- 优化性能和精度
-- 完善文档和示例
+### Advanced Features
+- **Real-time transmission** - Transmit live through the ADALM-Pluto SDR
+- **FPGA acceleration** - Use hardware acceleration for signal generation
+- **Network SDR** - Remote SDR control
+- **Signal analysis** - Built-in signal quality detection
 
 ---
 
-*最后更新：2025年1月*
+## 📝 Notes
+
+1. **Project status** - This project is still under active development.
+2. **BeiDou accuracy** - The BeiDou implementation currently has a known 5 km error issue.
+3. **Dependencies** - The required Python packages and development tools must be installed.
+4. **Hardware requirements** - FPGA and SDR hardware are optional components.
+5. **Data files** - Valid RINEX navigation data files are required.
+
+---
+
+## 🤝 Contribution Guide
+
+This is an open-source project, and contributions are welcome:
+- Report bugs and issues
+- Submit code improvements
+- Add support for new constellations
+- Optimize performance and accuracy
+- Improve documentation and examples
+
+---
+
+*Last updated: January 2025*
